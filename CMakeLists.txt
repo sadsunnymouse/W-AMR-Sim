@@ -14,11 +14,15 @@ set(PROJECT_SOURCES
     src/main.cpp
     src/CRole.cpp
     src/CUser.cpp
+    src/CCell.cpp
+    src/CWarehouseMap.cpp
 )
 
 set(PROJECT_HEADERS
     include/CRole.h
     include/CUser.h
+    include/CCell.h
+    include/CWarehouseMap.h
 )
 
 add_executable(w_amr_sim
