@@ -4,9 +4,12 @@
 #include "CWarehouseMap.h"
 #include "WarehouseGridWidget.h"
 #include <QComboBox>
+#include <QEvent>
 #include <QLabel>
 #include <QLineEdit>
+#include <QObject>
 #include <QPushButton>
+#include <QShortcut>
 #include <QSpinBox>
 #include <QWidget>
 
@@ -25,14 +28,21 @@ private:
     QLabel *statusLabel;
     QPushButton *approveButton;
     QPushButton *newDraftButton;
+    QShortcut *undoShortcut;
+    QShortcut *redoShortcut;
 
     void refreshStatusUI();
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void onCreateNewGrid();
     void onToolChanged(int index);
     void onApproveClicked();
     void onCreateDraftCopyClicked();
+    void onUndo();
+    void onRedo();
 
 public:
     explicit MapEditorWidget(QWidget *parent = nullptr);

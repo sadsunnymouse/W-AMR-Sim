@@ -10,6 +10,7 @@ void WarehouseGridWidget::setMap(CWarehouseMap *map)
 {
     mapRef = map;
     highlightedProblems.clear();
+    clearHistory();
     if (mapRef != nullptr)
     {
         setMinimumSize(mapRef->getWidth() * cellSize + 2,
@@ -37,6 +38,67 @@ void WarehouseGridWidget::clearProblemCells()
 {
     highlightedProblems.clear();
     update();
+}
+
+void WarehouseGridWidget::clearHistory()
+{
+    while (!undoStack.empty())
+    {
+        undoStack.pop();
+    }
+    while (!redoStack.empty())
+    {
+        redoStack.pop();
+    }
+    emit historyChanged();
+}
+
+bool WarehouseGridWidget::undo()
+{
+    if (mapRef == nullptr || mapRef->getStatus() == "Утверждена" || undoStack.empty())
+    {
+        return false;
+    }
+
+    CellEditAction action = undoStack.top();
+    undoStack.pop();
+
+    if (action.y < 0 || action.y >= mapRef->getHeight() ||
+        action.x < 0 || action.x >= mapRef->getWidth())
+    {
+        return false;
+    }
+
+    mapRef->cells[action.y][action.x].setObjectType(action.oldType);
+    redoStack.push(action);
+    highlightedProblems.clear();
+    update();
+    emit historyChanged();
+    return true;
+}
+
+bool WarehouseGridWidget::redo()
+{
+    if (mapRef == nullptr || mapRef->getStatus() == "Утверждена" || redoStack.empty())
+    {
+        return false;
+    }
+
+    CellEditAction action = redoStack.top();
+    redoStack.pop();
+
+    if (action.y < 0 || action.y >= mapRef->getHeight() ||
+        action.x < 0 || action.x >= mapRef->getWidth())
+    {
+        return false;
+    }
+
+    mapRef->cells[action.y][action.x].setObjectType(action.newType);
+    undoStack.push(action);
+    highlightedProblems.clear();
+    update();
+    emit historyChanged();
+    return true;
 }
 
 void WarehouseGridWidget::paintEvent(QPaintEvent * /*event*/)
@@ -108,13 +170,35 @@ void WarehouseGridWidget::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (mapRef->getStatus() == "Утверждена")
+    {
+        return;
+    }
+
     int x = static_cast<int>(event->position().x()) / cellSize;
     int y = static_cast<int>(event->position().y()) / cellSize;
 
+    if (y < 0 || y >= mapRef->getHeight() || x < 0 || x >= mapRef->getWidth())
+    {
+        return;
+    }
+
+    std::string previousType = mapRef->cells[y][x].objectType;
+    if (previousType == selectedTool)
+    {
+        return;
+    }
+
     if (mapRef->placeObject(x, y, selectedTool))
     {
+        undoStack.push({x, y, previousType, selectedTool});
+        while (!redoStack.empty())
+        {
+            redoStack.pop();
+        }
         highlightedProblems.clear();
         update();
+        emit historyChanged();
         emit cellEdited(x, y);
     }
 }
