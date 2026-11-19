@@ -1,0 +1,10 @@
+build/
+.vscode/
+*.o
+*.a
+*.so
+*.out
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
