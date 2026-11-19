@@ -180,8 +180,7 @@ void AdminUsersWidget::onAddUserClicked()
 
     for (const auto &u : users)
     {
-        if (u.authenticate(login.toStdString(), pass.toStdString()) ||
-            QString::fromStdString(u.getLogin()).compare(login, Qt::CaseInsensitive) == 0)
+        if (QString::fromStdString(u.getLogin()).compare(login, Qt::CaseInsensitive) == 0)
         {
             QMessageBox::warning(this, "Дубликат логина",
                                  "Пользователь с таким логином уже существует.");

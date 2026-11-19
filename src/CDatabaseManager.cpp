@@ -153,7 +153,7 @@ std::vector<CUser> CDatabaseManager::loadUsers()
         std::string login = rawLogin ? reinterpret_cast<const char *>(rawLogin) : "";
         std::string hash = rawHash ? reinterpret_cast<const char *>(rawHash) : "";
 
-        result.emplace_back(id, name, login, hash, blocked, roleId);
+        result.push_back(CUser::fromStoredHash(id, name, login, hash, blocked, roleId));
     }
 
     sqlite3_finalize(stmt);

@@ -19,25 +19,26 @@ public:
     CUser(int id,
           const std::string &name,
           const std::string &userLogin,
-          const std::string &hash,
+          const std::string &plainPassword,
           bool blocked,
-          int assignedRoleId);
+          int role);
 
-    void create(int id,
-                const std::string &name,
-                const std::string &userLogin,
-                const std::string &hash,
-                bool blocked,
-                int assignedRoleId);
-    bool authenticate(const std::string &inputLogin, const std::string &inputPasswordHash) const;
+    static CUser fromStoredHash(int id,
+                                const std::string &name,
+                                const std::string &userLogin,
+                                const std::string &storedHash,
+                                bool blocked,
+                                int role);
+
+    bool authenticate(const std::string &inputLogin, const std::string &inputPassword) const;
     void setRole(int newRoleId);
     void setBlockStatus(bool blocked);
-    void resetPassword(const std::string &newPasswordHash);
+    void resetPassword(const std::string &newPlainPassword);
 
     int getUserId() const;
-    bool getIsBlocked() const;
     std::string getLogin() const;
     std::string getPasswordHash() const;
+    bool getIsBlocked() const;
 };
 
 #endif

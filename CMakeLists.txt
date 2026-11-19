@@ -49,6 +49,7 @@ set(PROJECT_HEADERS
     include/SimulationControlWidget.h
     include/AdminUsersWidget.h
     include/MainWindow.h
+    include/SecurityUtils.h
 )
 
 

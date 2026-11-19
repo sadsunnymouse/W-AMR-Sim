@@ -1,43 +1,55 @@
 #include "CUser.h"
+#include "SecurityUtils.h"
 
 CUser::CUser()
-    : userId(0), login(""), passwordHash(""), isBlocked(false), fullName(""), roleId(0) {}
+    : userId(0),
+      login(""),
+      passwordHash(""),
+      isBlocked(false),
+      fullName(""),
+      roleId(0) {}
 
 CUser::CUser(int id,
              const std::string &name,
              const std::string &userLogin,
-             const std::string &hash,
+             const std::string &plainPassword,
              bool blocked,
-             int assignedRoleId)
+             int role)
     : userId(id),
       login(userLogin),
-      passwordHash(hash),
+      passwordHash(Security::hashPassword(plainPassword)),
       isBlocked(blocked),
       fullName(name),
-      roleId(assignedRoleId) {}
+      roleId(role) {}
 
-void CUser::create(int id,
-                   const std::string &name,
-                   const std::string &userLogin,
-                   const std::string &hash,
-                   bool blocked,
-                   int assignedRoleId)
+CUser CUser::fromStoredHash(int id,
+                            const std::string &name,
+                            const std::string &userLogin,
+                            const std::string &storedHash,
+                            bool blocked,
+                            int role)
 {
-    userId = id;
-    fullName = name;
-    login = userLogin;
-    passwordHash = hash;
-    isBlocked = blocked;
-    roleId = assignedRoleId;
+    CUser user;
+    user.userId = id;
+    user.fullName = name;
+    user.login = userLogin;
+    user.passwordHash = storedHash;
+    user.isBlocked = blocked;
+    user.roleId = role;
+    return user;
 }
 
-bool CUser::authenticate(const std::string &inputLogin, const std::string &inputPasswordHash) const
+bool CUser::authenticate(const std::string &inputLogin, const std::string &inputPassword) const
 {
     if (isBlocked)
     {
         return false;
     }
-    return (login == inputLogin) && (passwordHash == inputPasswordHash);
+    if (login != inputLogin)
+    {
+        return false;
+    }
+    return Security::verifyPassword(inputPassword, passwordHash);
 }
 
 void CUser::setRole(int newRoleId)
@@ -50,23 +62,26 @@ void CUser::setBlockStatus(bool blocked)
     isBlocked = blocked;
 }
 
-void CUser::resetPassword(const std::string &newPasswordHash)
+void CUser::resetPassword(const std::string &newPlainPassword)
 {
-    passwordHash = newPasswordHash;
+    passwordHash = Security::hashPassword(newPlainPassword);
 }
 
 int CUser::getUserId() const
 {
     return userId;
 }
+
 std::string CUser::getLogin() const
 {
     return login;
 }
+
 std::string CUser::getPasswordHash() const
 {
     return passwordHash;
 }
+
 bool CUser::getIsBlocked() const
 {
     return isBlocked;
