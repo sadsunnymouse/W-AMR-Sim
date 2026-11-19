@@ -18,6 +18,8 @@ set(PROJECT_SOURCES
     src/CWarehouseMap.cpp
     src/WarehouseGridWidget.cpp
     src/MapEditorWidget.cpp
+    src/CTask.cpp
+    src/CRobot.cpp
 )
 
 set(PROJECT_HEADERS
@@ -27,6 +29,8 @@ set(PROJECT_HEADERS
     include/CWarehouseMap.h
     include/WarehouseGridWidget.h
     include/MapEditorWidget.h
+    include/CTask.h
+    include/CRobot.h
 )
 
 add_executable(w_amr_sim
