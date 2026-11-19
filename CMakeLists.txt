@@ -12,9 +12,13 @@ qt_standard_project_setup()
 
 set(PROJECT_SOURCES
     src/main.cpp
+    src/CRole.cpp
+    src/CUser.cpp
 )
 
 set(PROJECT_HEADERS
+    include/CRole.h
+    include/CUser.h
 )
 
 add_executable(w_amr_sim
