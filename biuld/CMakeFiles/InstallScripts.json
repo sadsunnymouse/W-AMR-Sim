@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/regina/W-AMR-Sim/biuld/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

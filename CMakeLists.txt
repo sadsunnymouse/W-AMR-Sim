@@ -16,6 +16,8 @@ set(PROJECT_SOURCES
     src/CUser.cpp
     src/CCell.cpp
     src/CWarehouseMap.cpp
+    src/WarehouseGridWidget.cpp
+    src/MapEditorWidget.cpp
 )
 
 set(PROJECT_HEADERS
@@ -23,6 +25,8 @@ set(PROJECT_HEADERS
     include/CUser.h
     include/CCell.h
     include/CWarehouseMap.h
+    include/WarehouseGridWidget.h
+    include/MapEditorWidget.h
 )
 
 add_executable(w_amr_sim
