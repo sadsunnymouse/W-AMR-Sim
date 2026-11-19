@@ -1,5 +1,0 @@
-/home/regina/W-AMR-Sim/biuld/CMakeFiles/w_amr_sim.dir
-/home/regina/W-AMR-Sim/biuld/CMakeFiles/edit_cache.dir
-/home/regina/W-AMR-Sim/biuld/CMakeFiles/rebuild_cache.dir
-/home/regina/W-AMR-Sim/biuld/CMakeFiles/w_amr_sim_autogen_timestamp_deps.dir
-/home/regina/W-AMR-Sim/biuld/CMakeFiles/w_amr_sim_autogen.dir
