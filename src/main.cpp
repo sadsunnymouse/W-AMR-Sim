@@ -1,6 +1,8 @@
 #include "CWarehouseMap.h"
 #include "OperatorScenarioWidget.h"
+#include "SimulationControlWidget.h"
 #include <QApplication>
+#include <QTabWidget>
 #include <vector>
 
 int main(int argc, char *argv[])
@@ -16,11 +18,31 @@ int main(int argc, char *argv[])
 
     std::vector<CWarehouseMap> maps = {sampleMap};
 
-    OperatorScenarioWidget opWidget;
-    opWidget.setWindowTitle("W-AMR Sim — АРМ Оператора симуляции (Параметризация O1 / O2)");
-    opWidget.setAvailableMaps(maps);
-    opWidget.resize(1050, 680);
-    opWidget.show();
+    auto *tabs = new QTabWidget();
+    tabs->setWindowTitle("W-AMR Sim — Симулятор автономного складского робота");
 
-    return app.exec();
+    auto *opWidget = new OperatorScenarioWidget(tabs);
+    opWidget->setAvailableMaps(maps);
+
+    auto *simWidget = new SimulationControlWidget(tabs);
+
+    int simTabIndex = tabs->addTab(opWidget, "1. Параметризация сценария");
+    int runTabIndex = tabs->addTab(simWidget, "2. Запуск и мониторинг (O3)");
+
+    QObject::connect(opWidget, &OperatorScenarioWidget::scenarioApplied,
+                     [tabs, simWidget, runTabIndex](const ScenarioProfile &profile, const CWarehouseMap &map)
+                     {
+                         if (simWidget->loadScenario(profile, map))
+                         {
+                             tabs->setCurrentIndex(runTabIndex);
+                         }
+                     });
+
+    tabs->setCurrentIndex(simTabIndex);
+    tabs->resize(1120, 720);
+    tabs->show();
+
+    int exitCode = app.exec();
+    delete tabs;
+    return exitCode;
 }

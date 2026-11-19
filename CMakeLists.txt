@@ -18,11 +18,13 @@ set(PROJECT_SOURCES
     src/CWarehouseMap.cpp
     src/CTask.cpp
     src/CRobot.cpp
+    src/PathFinder.cpp
+    src/CSimulationSession.cpp
     src/WarehouseGridWidget.cpp
     src/MapEditorWidget.cpp
     src/SimulationMapWidget.cpp
     src/OperatorScenarioWidget.cpp
-    src/PathFinder.cpp
+    src/SimulationControlWidget.cpp
 )
 
 set(PROJECT_HEADERS
@@ -32,13 +34,14 @@ set(PROJECT_HEADERS
     include/CWarehouseMap.h
     include/CTask.h
     include/CRobot.h
+    include/PathFinder.h
+    include/CSimulationSession.h
     include/WarehouseGridWidget.h
     include/MapEditorWidget.h
     include/SimulationMapWidget.h
     include/OperatorScenarioWidget.h
-    include/PathFinder.h
+    include/SimulationControlWidget.h
 )
-
 add_executable(w_amr_sim
     ${PROJECT_SOURCES}
     ${PROJECT_HEADERS}
