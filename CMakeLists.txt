@@ -22,6 +22,7 @@ set(PROJECT_SOURCES
     src/MapEditorWidget.cpp
     src/SimulationMapWidget.cpp
     src/OperatorScenarioWidget.cpp
+    src/PathFinder.cpp
 )
 
 set(PROJECT_HEADERS
@@ -35,6 +36,7 @@ set(PROJECT_HEADERS
     include/MapEditorWidget.h
     include/SimulationMapWidget.h
     include/OperatorScenarioWidget.h
+    include/PathFinder.h
 )
 
 add_executable(w_amr_sim
