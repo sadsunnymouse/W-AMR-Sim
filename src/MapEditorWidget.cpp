@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QScrollArea>
 #include <QVBoxLayout>
+#include <QFileDialog>
 
 MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
 {
@@ -49,6 +50,16 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
 
     approveButton = new QPushButton("Проверить и утвердить", this);
     newDraftButton = new QPushButton("Создать черновик новой версии", this);
+    exportButton = new QPushButton("Экспорт в файл", this);
+    importButton = new QPushButton("Импорт из файла", this);
+
+    toolBar->addWidget(new QLabel("Объект:", this));
+    toolBar->addWidget(toolCombo);
+    toolBar->addStretch();
+    toolBar->addWidget(importButton);
+    toolBar->addWidget(exportButton);
+    toolBar->addWidget(approveButton);
+    toolBar->addWidget(newDraftButton);
 
     toolBar->addWidget(new QLabel("Объект:", this));
     toolBar->addWidget(toolCombo);
@@ -83,7 +94,8 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
     connect(undoShortcut, &QShortcut::activated, this, &MapEditorWidget::onUndo);
     connect(redoShortcut, &QShortcut::activated, this, &MapEditorWidget::onRedo);
     connect(gridWidget, &WarehouseGridWidget::historyChanged, this, &MapEditorWidget::refreshStatusUI);
-
+    connect(exportButton, &QPushButton::clicked, this, &MapEditorWidget::onExportClicked);
+    connect(importButton, &QPushButton::clicked, this, &MapEditorWidget::onImportClicked);
     refreshStatusUI();
 }
 
@@ -169,6 +181,64 @@ void MapEditorWidget::onCreateDraftCopyClicked()
     currentMap = currentMap.createDraftCopy();
     gridWidget->setMap(&currentMap);
     refreshStatusUI();
+}
+
+void MapEditorWidget::onExportClicked()
+{
+    QString defaultName = QString::fromStdString(currentMap.title) + ".wamrmap";
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        "Экспорт конфигурации склада",
+        defaultName,
+        "Конфигурации склада (*.wamrmap);;Текстовые файлы (*.txt);;Все файлы (*)");
+
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+
+    if (currentMap.exportToFile(filePath.toStdString()))
+    {
+        QMessageBox::information(this, "Экспорт конфигурации",
+                                 "Конфигурация склада успешно сохранена в файл.");
+    }
+    else
+    {
+        QMessageBox::warning(this, "Ошибка экспорта",
+                             "Не удалось сохранить конфигурацию склада в выбранный файл.");
+    }
+}
+
+void MapEditorWidget::onImportClicked()
+{
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Импорт конфигурации склада",
+        "",
+        "Конфигурации склада (*.wamrmap);;Текстовые файлы (*.txt);;Все файлы (*)");
+
+    if (filePath.isEmpty())
+    {
+        return;
+    }
+
+    CWarehouseMap importedMap;
+    if (importedMap.importFromFile(filePath.toStdString()))
+    {
+        currentMap = importedMap;
+        titleEdit->setText(QString::fromStdString(currentMap.title));
+        widthSpin->setValue(currentMap.getWidth());
+        heightSpin->setValue(currentMap.getHeight());
+        gridWidget->setMap(&currentMap);
+        refreshStatusUI();
+        QMessageBox::information(this, "Импорт конфигурации",
+                                 "Конфигурация склада успешно загружена.");
+    }
+    else
+    {
+        QMessageBox::warning(this, "Ошибка импорта",
+                             "Файл повреждён или имеет неподдерживаемый формат.");
+    }
 }
 
 void MapEditorWidget::onUndo()

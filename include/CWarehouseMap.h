@@ -39,6 +39,8 @@ public:
     bool validateConnectivity(std::vector<std::pair<int, int>> &problemCells) const;
     bool approveMap(std::vector<std::pair<int, int>> &problemCells);
     CWarehouseMap createDraftCopy() const;
+    bool exportToFile(const std::string &filePath) const;
+    bool importFromFile(const std::string &filePath);
 
     int getMapId() const;
     int getVersion() const;

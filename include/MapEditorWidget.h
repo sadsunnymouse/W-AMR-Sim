@@ -30,6 +30,8 @@ private:
     QPushButton *newDraftButton;
     QShortcut *undoShortcut;
     QShortcut *redoShortcut;
+    QPushButton *exportButton;
+    QPushButton *importButton;
 
     void refreshStatusUI();
 
@@ -43,6 +45,8 @@ private slots:
     void onCreateDraftCopyClicked();
     void onUndo();
     void onRedo();
+    void onExportClicked();
+    void onImportClicked();
 
 public:
     explicit MapEditorWidget(QWidget *parent = nullptr);

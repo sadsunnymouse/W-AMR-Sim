@@ -1,5 +1,7 @@
 #include "CWarehouseMap.h"
 #include <queue>
+#include <fstream>
+#include <sstream>
 
 CWarehouseMap::CWarehouseMap()
     : mapId(0),
@@ -171,6 +173,194 @@ CWarehouseMap CWarehouseMap::createDraftCopy() const
     }
 
     return copy;
+}
+
+bool CWarehouseMap::exportToFile(const std::string &filePath) const
+{
+    if (width <= 0 || height <= 0 || cells.empty())
+    {
+        return false;
+    }
+
+    std::ofstream out(filePath, std::ios::out | std::ios::trunc);
+    if (!out.is_open())
+    {
+        return false;
+    }
+
+    out << "WAMR_MAP_V1\n";
+    out << "id=" << mapId << "\n";
+    out << "title=" << title << "\n";
+    out << "version=" << version << "\n";
+    out << "width=" << width << "\n";
+    out << "height=" << height << "\n";
+    out << "status=" << status << "\n";
+    out << "author_id=" << authorId << "\n";
+    out << "GRID_BEGIN\n";
+
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            if (x > 0)
+            {
+                out << ";";
+            }
+            out << cells[y][x].objectType;
+        }
+        out << "\n";
+    }
+
+    out << "GRID_END\n";
+    return out.good();
+}
+
+bool CWarehouseMap::importFromFile(const std::string &filePath)
+{
+    std::ifstream in(filePath, std::ios::in);
+    if (!in.is_open())
+    {
+        return false;
+    }
+
+    std::string headerLine;
+    if (!std::getline(in, headerLine))
+    {
+        return false;
+    }
+    if (!headerLine.empty() && headerLine.back() == '\r')
+    {
+        headerLine.pop_back();
+    }
+    if (headerLine != "WAMR_MAP_V1")
+    {
+        return false;
+    }
+
+    int parsedId = 0;
+    std::string parsedTitle = "Импортированная схема";
+    int parsedVersion = 1;
+    int parsedWidth = 0;
+    int parsedHeight = 0;
+    std::string parsedStatus = "Черновик";
+    int parsedAuthorId = 0;
+
+    std::string line;
+    bool inGrid = false;
+    std::vector<std::vector<std::string>> parsedRows;
+
+    while (std::getline(in, line))
+    {
+        if (!line.empty() && line.back() == '\r')
+        {
+            line.pop_back();
+        }
+        if (line.empty())
+        {
+            continue;
+        }
+
+        if (line == "GRID_BEGIN")
+        {
+            inGrid = true;
+            continue;
+        }
+        if (line == "GRID_END")
+        {
+            inGrid = false;
+            break;
+        }
+
+        if (!inGrid)
+        {
+            auto eqPos = line.find('=');
+            if (eqPos == std::string::npos)
+            {
+                continue;
+            }
+            std::string key = line.substr(0, eqPos);
+            std::string value = line.substr(eqPos + 1);
+
+            try
+            {
+                if (key == "id")
+                {
+                    parsedId = std::stoi(value);
+                }
+                else if (key == "title")
+                {
+                    parsedTitle = value;
+                }
+                else if (key == "version")
+                {
+                    parsedVersion = std::stoi(value);
+                }
+                else if (key == "width")
+                {
+                    parsedWidth = std::stoi(value);
+                }
+                else if (key == "height")
+                {
+                    parsedHeight = std::stoi(value);
+                }
+                else if (key == "status")
+                {
+                    parsedStatus = value;
+                }
+                else if (key == "author_id")
+                {
+                    parsedAuthorId = std::stoi(value);
+                }
+            }
+            catch (...)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            std::vector<std::string> row;
+            std::stringstream ss(line);
+            std::string cellType;
+            while (std::getline(ss, cellType, ';'))
+            {
+                row.push_back(cellType);
+            }
+            parsedRows.push_back(row);
+        }
+    }
+
+    if (parsedWidth <= 0 || parsedHeight <= 0)
+    {
+        return false;
+    }
+    if (static_cast<int>(parsedRows.size()) != parsedHeight)
+    {
+        return false;
+    }
+    for (const auto &row : parsedRows)
+    {
+        if (static_cast<int>(row.size()) != parsedWidth)
+        {
+            return false;
+        }
+    }
+
+    if (parsedStatus != "Черновик" && parsedStatus != "Утверждена" && parsedStatus != "В архиве")
+    {
+        parsedStatus = "Черновик";
+    }
+
+    create(parsedId, parsedTitle, parsedVersion, parsedWidth, parsedHeight, parsedStatus, parsedAuthorId);
+    for (int y = 0; y < parsedHeight; ++y)
+    {
+        for (int x = 0; x < parsedWidth; ++x)
+        {
+            cells[y][x].setObjectType(parsedRows[y][x]);
+        }
+    }
+
+    return true;
 }
 
 int CWarehouseMap::getMapId() const
