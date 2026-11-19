@@ -10,6 +10,8 @@ pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 
 qt_standard_project_setup()
 
+find_package(SQLite3 REQUIRED)
+
 set(PROJECT_SOURCES
     src/main.cpp
     src/CRole.cpp
@@ -20,6 +22,7 @@ set(PROJECT_SOURCES
     src/CRobot.cpp
     src/PathFinder.cpp
     src/CSimulationSession.cpp
+    src/CDatabaseManager.cpp
     src/WarehouseGridWidget.cpp
     src/MapEditorWidget.cpp
     src/SimulationMapWidget.cpp
@@ -38,6 +41,7 @@ set(PROJECT_HEADERS
     include/CRobot.h
     include/PathFinder.h
     include/CSimulationSession.h
+    include/CDatabaseManager.h
     include/WarehouseGridWidget.h
     include/MapEditorWidget.h
     include/SimulationMapWidget.h
@@ -46,6 +50,8 @@ set(PROJECT_HEADERS
     include/AdminUsersWidget.h
     include/MainWindow.h
 )
+
+
 add_executable(w_amr_sim
     ${PROJECT_SOURCES}
     ${PROJECT_HEADERS}
@@ -60,3 +66,5 @@ target_link_libraries(w_amr_sim PRIVATE
     Qt6::Widgets
     ${SQLITE3_LIBRARIES}
 )
+
+target_link_libraries(w_amr_sim PRIVATE Qt6::Widgets SQLite::SQLite3)

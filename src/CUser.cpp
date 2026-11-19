@@ -63,7 +63,10 @@ std::string CUser::getLogin() const
 {
     return login;
 }
-
+std::string CUser::getPasswordHash() const
+{
+    return passwordHash;
+}
 bool CUser::getIsBlocked() const
 {
     return isBlocked;

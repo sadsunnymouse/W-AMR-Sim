@@ -37,6 +37,7 @@ public:
     int getUserId() const;
     bool getIsBlocked() const;
     std::string getLogin() const;
+    std::string getPasswordHash() const;
 };
 
 #endif
