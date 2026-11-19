@@ -25,6 +25,8 @@ set(PROJECT_SOURCES
     src/SimulationMapWidget.cpp
     src/OperatorScenarioWidget.cpp
     src/SimulationControlWidget.cpp
+    src/AdminUsersWidget.cpp
+    src/MainWindow.cpp
 )
 
 set(PROJECT_HEADERS
@@ -41,6 +43,8 @@ set(PROJECT_HEADERS
     include/SimulationMapWidget.h
     include/OperatorScenarioWidget.h
     include/SimulationControlWidget.h
+    include/AdminUsersWidget.h
+    include/MainWindow.h
 )
 add_executable(w_amr_sim
     ${PROJECT_SOURCES}

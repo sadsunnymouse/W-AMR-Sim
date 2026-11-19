@@ -59,6 +59,10 @@ int CUser::getUserId() const
 {
     return userId;
 }
+std::string CUser::getLogin() const
+{
+    return login;
+}
 
 bool CUser::getIsBlocked() const
 {
