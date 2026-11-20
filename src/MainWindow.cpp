@@ -6,16 +6,24 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), isLoggedIn(false)
+    : QMainWindow(parent),
+      isLoggedIn(false),
+      currentUserLabel(nullptr),
+      switchUserBtn(nullptr),
+      roleTabs(nullptr),
+      adminWidget(nullptr),
+      mapEditorWidget(nullptr),
+      operatorWidget(nullptr),
+      simulationWidget(nullptr)
 {
-    initDefaultRolesAndUsers();
-
     auto *central = new QWidget(this);
     auto *rootLayout = new QVBoxLayout(central);
 
-    // Верхняя панель сессии пользователя
     auto *topBar = new QHBoxLayout();
     currentUserLabel = new QLabel("Пользователь: не авторизован", this);
     switchUserBtn = new QPushButton("Войти / Сменить пользователя", this);
@@ -42,8 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(operatorWidget, &OperatorScenarioWidget::scenarioApplied,
             this, &MainWindow::onScenarioApplied);
 
-    // Загружаем начальную утверждённую карту в операторский модуль
-    syncApprovedMapsToOperator();
+    initDatabaseAndData();
     rebuildTabsForCurrentUser();
     onSwitchUserClicked();
 }
@@ -60,21 +67,18 @@ void MainWindow::initDefaultRolesAndUsers()
         CUser(2, "Руководитель склада", "manager", "manager123", false, 2),
         CUser(3, "Оператор симуляции", "operator", "operator123", false, 3)};
 }
-
 void MainWindow::syncApprovedMapsToOperator()
 {
-    std::vector<CWarehouseMap> maps;
-    maps.push_back(mapEditorWidget->getCurrentMap());
+    if (operatorWidget == nullptr)
+    {
+        return;
+    }
 
-    // Добавляем демонстрационную утверждённую схему, если текущая ещё черновик
-    CWarehouseMap demoApproved;
-    demoApproved.create(10, "Склад №1 (Утверждённый)", 1, 10, 8, "Утверждена", 2);
-    demoApproved.placeObject(3, 2, "wall");
-    demoApproved.placeObject(3, 3, "rack");
-    demoApproved.placeObject(1, 1, "charging");
-    demoApproved.placeObject(8, 6, "zone");
-    maps.push_back(demoApproved);
-
+    std::vector<CWarehouseMap> maps = storedMaps;
+    if (mapEditorWidget != nullptr)
+    {
+        maps.push_back(mapEditorWidget->getCurrentMap());
+    }
     operatorWidget->setAvailableMaps(maps);
 }
 
@@ -204,6 +208,12 @@ void MainWindow::onSwitchUserClicked()
 void MainWindow::onUsersUpdated(const std::vector<CUser> &updatedUsers)
 {
     users = updatedUsers;
+    if (dbManager.isOpen() && !dbManager.saveUsers(users))
+    {
+        QMessageBox::warning(this, "Ошибка сохранения в БД",
+                             "Не удалось сохранить изменения пользователей в SQLite: " +
+                                 QString::fromStdString(dbManager.getLastError()));
+    }
 }
 
 void MainWindow::onScenarioApplied(const ScenarioProfile &profile, const CWarehouseMap &map)
@@ -219,4 +229,89 @@ void MainWindow::onScenarioApplied(const ScenarioProfile &profile, const CWareho
             }
         }
     }
+}
+
+void MainWindow::initDatabaseAndData()
+{
+    // Ищем каталог проекта/db относительно текущей директории или каталога исполняемого файла
+    QStringList candidateDbPaths = {
+        "db/wamr_sim.db",
+        QCoreApplication::applicationDirPath() + "/../db/wamr_sim.db",
+        QCoreApplication::applicationDirPath() + "/../../db/wamr_sim.db"};
+    QStringList candidateSchemaPaths = {
+        "db/schema.sql",
+        QCoreApplication::applicationDirPath() + "/../db/schema.sql",
+        QCoreApplication::applicationDirPath() + "/../../db/schema.sql"};
+
+    QString dbFile = candidateDbPaths.first();
+    for (const QString &p : candidateDbPaths)
+    {
+        if (QFileInfo::exists(p))
+        {
+            dbFile = p;
+            break;
+        }
+    }
+
+    QString schemaFile;
+    for (const QString &p : candidateSchemaPaths)
+    {
+        if (QFileInfo::exists(p))
+        {
+            schemaFile = p;
+            break;
+        }
+    }
+
+    // Создаём папку db, если её ещё нет
+    QFileInfo dbInfo(dbFile);
+    QDir().mkpath(dbInfo.absolutePath());
+
+    if (!dbManager.open(dbFile.toStdString()))
+    {
+        QMessageBox::warning(this, "База данных SQLite",
+                             "Не удалось открыть БД: " + QString::fromStdString(dbManager.getLastError()) +
+                                 "\nПриложение продолжит работу с данными в памяти.");
+        initDefaultRolesAndUsers();
+        syncApprovedMapsToOperator();
+        return;
+    }
+
+    if (!schemaFile.isEmpty())
+    {
+        dbManager.applySchemaFile(schemaFile.toStdString());
+    }
+
+    roles = dbManager.loadRoles();
+    users = dbManager.loadUsers();
+
+    if (roles.empty() || users.empty())
+    {
+        initDefaultRolesAndUsers();
+        dbManager.saveUsers(users);
+    }
+
+    std::vector<CWarehouseMap> loadedMaps = dbManager.loadMaps();
+    if (loadedMaps.empty())
+    {
+        CWarehouseMap demoApproved;
+        demoApproved.create(10, "Склад №1 (Утверждённый)", 1, 10, 8, "Утверждена", 2);
+        demoApproved.placeObject(3, 2, "wall");
+        demoApproved.placeObject(3, 3, "rack");
+        demoApproved.placeObject(1, 1, "charging");
+        demoApproved.placeObject(8, 6, "zone");
+
+        int savedId = dbManager.saveMap(demoApproved);
+        if (savedId > 0)
+        {
+            loadedMaps = dbManager.loadMaps();
+        }
+        else
+        {
+            loadedMaps.push_back(demoApproved);
+        }
+    }
+
+    storedMaps = loadedMaps;
+    syncApprovedMapsToOperator();
 }

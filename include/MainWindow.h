@@ -8,6 +8,7 @@
 #include "MapEditorWidget.h"
 #include "OperatorScenarioWidget.h"
 #include "SimulationControlWidget.h"
+#include "CDatabaseManager.h"
 #include <QLabel>
 #include <QMainWindow>
 #include <QPushButton>
@@ -32,6 +33,10 @@ private:
     MapEditorWidget *mapEditorWidget;
     OperatorScenarioWidget *operatorWidget;
     SimulationControlWidget *simulationWidget;
+    CDatabaseManager dbManager;
+    std::vector<CWarehouseMap> storedMaps;
+
+    void initDatabaseAndData();
 
     void initDefaultRolesAndUsers();
     void rebuildTabsForCurrentUser();

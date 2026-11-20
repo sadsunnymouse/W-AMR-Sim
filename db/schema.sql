@@ -39,8 +39,3 @@ INSERT OR IGNORE INTO roles (role_id, title, access_mask, description) VALUES
     (1, 'Администратор системы', 1, 'Управление учетными записями и ролями'),
     (2, 'Руководитель склада', 2, 'Конструирование и утверждение топологии склада'),
     (3, 'Оператор симуляции', 4, 'Параметризация, запуск и мониторинг симуляции');
-
-INSERT OR IGNORE INTO users (user_id, full_name, login, password_hash, is_blocked, role_id) VALUES
-    (1, 'Администратор', 'admin', 'admin123', 0, 1),
-    (2, 'Руководитель склада', 'manager', 'manager123', 0, 2),
-    (3, 'Оператор симуляции', 'operator', 'operator123', 0, 3);
