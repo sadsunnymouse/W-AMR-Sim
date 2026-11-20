@@ -372,3 +372,136 @@ int CDatabaseManager::saveMap(const CWarehouseMap &map)
     }
     return savedMapId;
 }
+
+int CDatabaseManager::saveSimulationSession(int mapId,
+                                            int operatorId,
+                                            const std::string &startedAt,
+                                            const std::string &status,
+                                            int totalTicks,
+                                            int completedTasks,
+                                            int totalTasks)
+{
+    if (db == nullptr)
+    {
+        lastError = "База данных не открыта";
+        return -1;
+    }
+
+    const char *sql =
+        "INSERT INTO simulation_sessions "
+        "(map_id, operator_id, started_at, status, total_ticks, completed_tasks, total_tasks) "
+        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7);";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        lastError = sqlite3_errmsg(db);
+        return -1;
+    }
+
+    sqlite3_bind_int(stmt, 1, mapId);
+    sqlite3_bind_int(stmt, 2, operatorId);
+    sqlite3_bind_text(stmt, 3, startedAt.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, status.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 5, totalTicks);
+    sqlite3_bind_int(stmt, 6, completedTasks);
+    sqlite3_bind_int(stmt, 7, totalTasks);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        lastError = sqlite3_errmsg(db);
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    sqlite3_finalize(stmt);
+    return static_cast<int>(sqlite3_last_insert_rowid(db));
+}
+
+int CDatabaseManager::saveSimulationReport(const SimulationReportRecord &record)
+{
+    if (db == nullptr)
+    {
+        lastError = "База данных не открыта";
+        return -1;
+    }
+
+    const char *sql =
+        "INSERT INTO simulation_reports "
+        "(session_id, created_at, total_time_sec, total_ticks, total_distance, "
+        "battery_consumed, recharge_count, idle_ticks, report_file_path) "
+        "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        lastError = sqlite3_errmsg(db);
+        return -1;
+    }
+
+    sqlite3_bind_int(stmt, 1, record.sessionId);
+    sqlite3_bind_text(stmt, 2, record.createdAt.c_str(), -1, SQLITE_TRANSIENT);
+    sqlite3_bind_double(stmt, 3, record.totalTimeSec);
+    sqlite3_bind_int(stmt, 4, record.totalTicks);
+    sqlite3_bind_double(stmt, 5, record.totalDistance);
+    sqlite3_bind_double(stmt, 6, record.batteryConsumed);
+    sqlite3_bind_int(stmt, 7, record.rechargeCount);
+    sqlite3_bind_int(stmt, 8, record.idleTicks);
+    sqlite3_bind_text(stmt, 9, record.reportFilePath.c_str(), -1, SQLITE_TRANSIENT);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        lastError = sqlite3_errmsg(db);
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    sqlite3_finalize(stmt);
+    return static_cast<int>(sqlite3_last_insert_rowid(db));
+}
+
+std::vector<SimulationReportRecord> CDatabaseManager::loadSimulationReports()
+{
+    std::vector<SimulationReportRecord> result;
+    if (db == nullptr)
+    {
+        return result;
+    }
+
+    const char *sql =
+        "SELECT report_id, session_id, created_at, total_time_sec, total_ticks, "
+        "total_distance, battery_consumed, recharge_count, idle_ticks, report_file_path "
+        "FROM simulation_reports ORDER BY report_id DESC;";
+
+    sqlite3_stmt *stmt = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        lastError = sqlite3_errmsg(db);
+        return result;
+    }
+
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        SimulationReportRecord rec;
+        rec.reportId = sqlite3_column_int(stmt, 0);
+        rec.sessionId = sqlite3_column_int(stmt, 1);
+
+        const unsigned char *rawCreatedAt = sqlite3_column_text(stmt, 2);
+        rec.createdAt = rawCreatedAt ? reinterpret_cast<const char *>(rawCreatedAt) : "";
+
+        rec.totalTimeSec = sqlite3_column_double(stmt, 3);
+        rec.totalTicks = sqlite3_column_int(stmt, 4);
+        rec.totalDistance = sqlite3_column_double(stmt, 5);
+        rec.batteryConsumed = sqlite3_column_double(stmt, 6);
+        rec.rechargeCount = sqlite3_column_int(stmt, 7);
+        rec.idleTicks = sqlite3_column_int(stmt, 8);
+
+        const unsigned char *rawPath = sqlite3_column_text(stmt, 9);
+        rec.reportFilePath = rawPath ? reinterpret_cast<const char *>(rawPath) : "";
+
+        result.push_back(rec);
+    }
+
+    sqlite3_finalize(stmt);
+    return result;
+}
