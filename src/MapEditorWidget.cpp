@@ -165,6 +165,8 @@ void MapEditorWidget::onApproveClicked()
         refreshStatusUI();
         QMessageBox::information(this, "Утверждение топологии",
                                  "Граф проходов связен. Схема переведена в статус «Утверждена» и защищена от изменений.");
+
+        emit mapApproved(getCurrentMap());
     }
     else
     {

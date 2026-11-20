@@ -51,6 +51,9 @@ private slots:
 public:
     explicit MapEditorWidget(QWidget *parent = nullptr);
     const CWarehouseMap &getCurrentMap() const;
+
+signals:
+    void mapApproved(const CWarehouseMap &map);
 };
 
 #endif

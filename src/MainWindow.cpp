@@ -49,6 +49,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(adminWidget, &AdminUsersWidget::usersChanged, this, &MainWindow::onUsersUpdated);
     connect(operatorWidget, &OperatorScenarioWidget::scenarioApplied,
             this, &MainWindow::onScenarioApplied);
+    connect(mapEditorWidget, &MapEditorWidget::mapApproved,
+            this, &MainWindow::onMapApproved);
 
     initDatabaseAndData();
     rebuildTabsForCurrentUser();
@@ -74,14 +76,8 @@ void MainWindow::syncApprovedMapsToOperator()
         return;
     }
 
-    std::vector<CWarehouseMap> maps = storedMaps;
-    if (mapEditorWidget != nullptr)
-    {
-        maps.push_back(mapEditorWidget->getCurrentMap());
-    }
-    operatorWidget->setAvailableMaps(maps);
+    operatorWidget->setAvailableMaps(storedMaps);
 }
-
 void MainWindow::rebuildTabsForCurrentUser()
 {
     while (roleTabs->count() > 0)
@@ -313,5 +309,31 @@ void MainWindow::initDatabaseAndData()
     }
 
     storedMaps = loadedMaps;
+    syncApprovedMapsToOperator();
+}
+void MainWindow::onMapApproved(const CWarehouseMap &map)
+{
+    if (dbManager.isOpen())
+    {
+        int savedId = dbManager.saveMap(map);
+        if (savedId > 0)
+        {
+            storedMaps = dbManager.loadMaps();
+        }
+        else
+        {
+            QMessageBox::warning(
+                this,
+                "Ошибка сохранения карты в БД",
+                "Не удалось сохранить утверждённую схему в SQLite: " +
+                    QString::fromStdString(dbManager.getLastError()));
+            storedMaps.push_back(map);
+        }
+    }
+    else
+    {
+        storedMaps.push_back(map);
+    }
+
     syncApprovedMapsToOperator();
 }
