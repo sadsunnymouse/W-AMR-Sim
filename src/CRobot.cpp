@@ -8,6 +8,8 @@ CRobot::CRobot()
       currentCharge(100.0),
       criticalThreshold(20.0),
       energyPerStep(1.0),
+      totalBatteryConsumed(0.0),
+      rechargeCount(0),
       fsmState("Ожидание"),
       totalSteps(0) {}
 
@@ -27,6 +29,8 @@ void CRobot::create(int id, int startX, int startY)
     energyPerStep = 1.0;
     fsmState = "Ожидание";
     totalSteps = 0;
+    totalBatteryConsumed = 0.0;
+    rechargeCount = 0;
 }
 
 bool CRobot::setBatteryParams(double capacity,
@@ -55,6 +59,8 @@ bool CRobot::setBatteryParams(double capacity,
     currentCharge = initialChargePercent;
     criticalThreshold = thresholdPercent;
     energyPerStep = stepEnergy;
+    totalBatteryConsumed = 0.0;
+    rechargeCount = 0;
     return true;
 }
 
@@ -78,16 +84,25 @@ void CRobot::moveStep(int nextX, int nextY)
 
 void CRobot::consumeEnergy()
 {
+    double chargeBefore = currentCharge;
     double deltaPercent = (energyPerStep * 100.0) / batteryCapacity;
     currentCharge -= deltaPercent;
     if (currentCharge < 0.0)
     {
         currentCharge = 0.0;
     }
+    if (currentCharge < chargeBefore)
+    {
+        totalBatteryConsumed += (chargeBefore - currentCharge);
+    }
 }
 
 void CRobot::recharge()
 {
+    if (currentCharge < 100.0)
+    {
+        ++rechargeCount;
+    }
     currentCharge = 100.0;
 }
 
@@ -129,4 +144,14 @@ double CRobot::getCriticalThreshold() const
 double CRobot::getEnergyPerStep() const
 {
     return energyPerStep;
+}
+
+double CRobot::getTotalBatteryConsumed() const
+{
+    return totalBatteryConsumed;
+}
+
+int CRobot::getRechargeCount() const
+{
+    return rechargeCount;
 }

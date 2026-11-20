@@ -14,6 +14,7 @@
 #include <QPushButton>
 #include <QTabWidget>
 #include <vector>
+#include "CSimulationReport.h"
 
 class MainWindow : public QMainWindow
 {
@@ -47,6 +48,7 @@ private slots:
     void onUsersUpdated(const std::vector<CUser> &updatedUsers);
     void onScenarioApplied(const ScenarioProfile &profile, const CWarehouseMap &map);
     void onMapApproved(const CWarehouseMap &map);
+    void onReportGenerated(const CSimulationReport &report);
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);

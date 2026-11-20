@@ -51,7 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::onScenarioApplied);
     connect(mapEditorWidget, &MapEditorWidget::mapApproved,
             this, &MainWindow::onMapApproved);
-
+    connect(simulationWidget, &SimulationControlWidget::reportGenerated,
+            this, &MainWindow::onReportGenerated);
     initDatabaseAndData();
     rebuildTabsForCurrentUser();
     onSwitchUserClicked();
@@ -98,6 +99,11 @@ void MainWindow::rebuildTabsForCurrentUser()
     {
         currentUserLabel->setText("Пользователь: не авторизован");
         return;
+    }
+
+    if (simulationWidget != nullptr)
+    {
+        simulationWidget->setCurrentOperator(currentUser.getUserId(), currentUser.fullName);
     }
 
     QString roleTitle = "Неизвестная роль";
@@ -336,4 +342,47 @@ void MainWindow::onMapApproved(const CWarehouseMap &map)
     }
 
     syncApprovedMapsToOperator();
+}
+
+void MainWindow::onReportGenerated(const CSimulationReport &report)
+{
+    if (!dbManager.isOpen())
+    {
+        return;
+    }
+
+    int sessionId = dbManager.saveSimulationSession(
+        report.getMapId(),
+        report.getOperatorId(),
+        report.getCreatedAt(),
+        report.getSessionStatus(),
+        report.getTotalTicks(),
+        report.getCompletedTasks(),
+        report.getTotalTasks());
+
+    if (sessionId <= 0)
+    {
+        QMessageBox::warning(this, "Ошибка БД",
+                             "Не удалось сохранить сеанс симуляции в SQLite: " +
+                                 QString::fromStdString(dbManager.getLastError()));
+        return;
+    }
+
+    SimulationReportRecord rec;
+    rec.sessionId = sessionId;
+    rec.createdAt = report.getCreatedAt();
+    rec.totalTimeSec = report.getTotalTimeSec();
+    rec.totalTicks = report.getTotalTicks();
+    rec.totalDistance = report.getTotalDistance();
+    rec.batteryConsumed = report.getBatteryConsumed();
+    rec.rechargeCount = report.getRechargeCount();
+    rec.idleTicks = report.getIdleTicks();
+    rec.reportFilePath = report.getReportFilePath();
+
+    if (dbManager.saveSimulationReport(rec) <= 0)
+    {
+        QMessageBox::warning(this, "Ошибка БД",
+                             "Не удалось сохранить аналитический отчёт в SQLite: " +
+                                 QString::fromStdString(dbManager.getLastError()));
+    }
 }

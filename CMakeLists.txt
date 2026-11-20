@@ -30,6 +30,7 @@ set(PROJECT_SOURCES
     src/SimulationControlWidget.cpp
     src/AdminUsersWidget.cpp
     src/MainWindow.cpp
+    src/CSimulationReport.cpp
 )
 
 set(PROJECT_HEADERS
@@ -50,6 +51,7 @@ set(PROJECT_HEADERS
     include/AdminUsersWidget.h
     include/MainWindow.h
     include/SecurityUtils.h
+    include/CSimulationReport.h
 )
 
 

@@ -364,3 +364,57 @@ std::string CSimulationSession::getLastEventMessage() const
 {
     return lastEventMessage;
 }
+
+int CSimulationSession::getCompletedTasksCount() const
+{
+    return static_cast<int>(std::min(activeTaskIndex, taskQueue.size()));
+}
+
+int CSimulationSession::getTotalTasksCount() const
+{
+    return static_cast<int>(taskQueue.size());
+}
+
+double CSimulationSession::getTotalDistance() const
+{
+    return static_cast<double>(robot.totalSteps);
+}
+
+double CSimulationSession::getTotalBatteryConsumed() const
+{
+    return robot.getTotalBatteryConsumed();
+}
+
+int CSimulationSession::getRechargeCount() const
+{
+    return robot.getRechargeCount();
+}
+
+int CSimulationSession::getIdleTicks() const
+{
+    int diff = currentStep - robot.totalSteps;
+    return diff > 0 ? diff : 0;
+}
+
+CSimulationReport CSimulationSession::buildReport(int operatorId,
+                                                  const std::string &operatorName,
+                                                  const std::string &createdAt,
+                                                  double totalTimeSec) const
+{
+    CSimulationReport report;
+    report.setContext(mapId,
+                      map.title,
+                      operatorId,
+                      operatorName,
+                      createdAt,
+                      status);
+    report.setMetrics(totalTimeSec,
+                      currentStep,
+                      getCompletedTasksCount(),
+                      getTotalTasksCount(),
+                      getTotalDistance(),
+                      getTotalBatteryConsumed(),
+                      getRechargeCount(),
+                      getIdleTicks());
+    return report;
+}

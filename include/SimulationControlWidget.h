@@ -9,6 +9,8 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QWidget>
+#include "CSimulationReport.h"
+#include <string>
 
 class SimulationCanvasWidget : public QWidget
 {
@@ -41,6 +43,9 @@ private:
     QPushButton *pauseBtn;
     QPushButton *stepBtn;
     QPushButton *resetBtn;
+    QPushButton *reportBtn;
+    int currentOperatorId;
+    std::string currentOperatorName;
 
     QLabel *sessionStatusLabel;
     QLabel *fsmStateLabel;
@@ -51,6 +56,8 @@ private:
     QListWidget *tasksStatusList;
 
     void refreshTelemetryUI();
+signals:
+    void reportGenerated(const CSimulationReport &report);
 
 private slots:
     void onStartClicked();
@@ -58,10 +65,12 @@ private slots:
     void onStepClicked();
     void onResetClicked();
     void onTimerTick();
+    void onGenerateReportClicked();
 
 public:
     explicit SimulationControlWidget(QWidget *parent = nullptr);
     bool loadScenario(const ScenarioProfile &profile, const CWarehouseMap &approvedMap);
+    void setCurrentOperator(int operatorId, const std::string &operatorName);
 };
 
 #endif

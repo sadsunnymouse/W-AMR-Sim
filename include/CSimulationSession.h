@@ -5,6 +5,7 @@
 #include "CTask.h"
 #include "CWarehouseMap.h"
 #include "PathFinder.h"
+#include "CSimulationReport.h"
 #include <string>
 #include <vector>
 
@@ -65,6 +66,16 @@ public:
     const std::vector<CTask> &getTaskQueue() const;
     const std::vector<GridPoint> &getActivePath() const;
     std::string getLastEventMessage() const;
+    int getCompletedTasksCount() const;
+    int getTotalTasksCount() const;
+    double getTotalDistance() const;
+    double getTotalBatteryConsumed() const;
+    int getRechargeCount() const;
+    int getIdleTicks() const;
+    CSimulationReport buildReport(int operatorId,
+                                  const std::string &operatorName,
+                                  const std::string &createdAt,
+                                  double totalTimeSec) const;
 };
 
 #endif

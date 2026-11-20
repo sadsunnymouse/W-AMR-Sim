@@ -6,6 +6,9 @@
 #include <QPen>
 #include <QScrollArea>
 #include <QVBoxLayout>
+#include <QDateTime>
+#include <QFileDialog>
+#include <QMessageBox>
 
 SimulationCanvasWidget::SimulationCanvasWidget(QWidget *parent)
     : QWidget(parent), sessionRef(nullptr), cellSize(36) {}
@@ -139,7 +142,8 @@ void SimulationCanvasWidget::paintEvent(QPaintEvent * /*event*/)
 }
 
 SimulationControlWidget::SimulationControlWidget(QWidget *parent)
-    : QWidget(parent), hasSession(false)
+    : QWidget(parent), hasSession(false), reportBtn(nullptr),
+      currentOperatorId(0), currentOperatorName("Оператор")
 {
     auto *mainLayout = new QHBoxLayout(this);
 
@@ -156,6 +160,8 @@ SimulationControlWidget::SimulationControlWidget(QWidget *parent)
     pauseBtn = new QPushButton("Пауза", this);
     stepBtn = new QPushButton("Шаг", this);
     resetBtn = new QPushButton("Сброс", this);
+    reportBtn = new QPushButton("Сформировать отчёт (О4)", this);
+    reportBtn->setMinimumWidth(reportBtn->sizeHint().width() + 16);
     ctrlGrid->addWidget(startBtn);
     ctrlGrid->addWidget(pauseBtn);
     ctrlGrid->addWidget(stepBtn);
@@ -198,7 +204,7 @@ SimulationControlWidget::SimulationControlWidget(QWidget *parent)
     connect(stepBtn, &QPushButton::clicked, this, &SimulationControlWidget::onStepClicked);
     connect(resetBtn, &QPushButton::clicked, this, &SimulationControlWidget::onResetClicked);
     connect(stepTimer, &QTimer::timeout, this, &SimulationControlWidget::onTimerTick);
-
+    connect(reportBtn, &QPushButton::clicked, this, &SimulationControlWidget::onGenerateReportClicked);
     refreshTelemetryUI();
 }
 
@@ -320,4 +326,73 @@ void SimulationControlWidget::refreshTelemetryUI()
     }
 
     canvasWidget->update();
+}
+
+void SimulationControlWidget::setCurrentOperator(int operatorId, const std::string &operatorName)
+{
+    currentOperatorId = operatorId;
+    currentOperatorName = operatorName;
+}
+
+void SimulationControlWidget::onGenerateReportClicked()
+{
+    if (!hasSession)
+    {
+        QMessageBox::information(this, "Отчёт симуляции",
+                                 "Сначала загрузите сценарий и запустите симуляцию.");
+        return;
+    }
+
+    if (stepTimer != nullptr && stepTimer->isActive())
+    {
+        stepTimer->stop();
+        session.pause();
+        refreshTelemetryUI();
+    }
+
+    const int intervalMs = (stepTimer != nullptr && stepTimer->interval() > 0)
+                               ? stepTimer->interval()
+                               : 500;
+    const double totalTimeSec =
+        static_cast<double>(session.getCurrentStep()) * (static_cast<double>(intervalMs) / 1000.0);
+    const std::string createdAt =
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss").toStdString();
+
+    CSimulationReport report =
+        session.buildReport(currentOperatorId, currentOperatorName, createdAt, totalTimeSec);
+
+    QString preview = QString::fromStdString(report.generateTextReport());
+    auto reply = QMessageBox::question(
+        this,
+        "Аналитический отчёт симуляции (О4)",
+        preview + "\nСохранить отчёт во внешний файл?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes)
+    {
+        QString defaultName = QString("wamr_report_%1.txt")
+                                  .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+        QString filePath = QFileDialog::getSaveFileName(
+            this,
+            "Сохранить аналитический отчёт",
+            defaultName,
+            "Текстовый отчёт (*.txt);;Таблица CSV (*.csv)");
+
+        if (!filePath.isEmpty())
+        {
+            std::string errorMsg;
+            if (report.saveToFile(filePath.toStdString(), errorMsg))
+            {
+                QMessageBox::information(this, "Отчёт сохранён",
+                                         "Аналитический отчёт успешно сохранён в файл:\n" + filePath);
+            }
+            else
+            {
+                QMessageBox::warning(this, "Ошибка сохранения",
+                                     QString::fromStdString(errorMsg));
+            }
+        }
+    }
+
+    emit reportGenerated(report);
 }

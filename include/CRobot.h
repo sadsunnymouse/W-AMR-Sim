@@ -13,6 +13,8 @@ private:
     double currentCharge;
     double criticalThreshold;
     double energyPerStep;
+    double totalBatteryConsumed;
+    int rechargeCount;
 
 public:
     std::string fsmState;
@@ -39,6 +41,8 @@ public:
     double getCurrentCharge() const;
     double getCriticalThreshold() const;
     double getEnergyPerStep() const;
+    double getTotalBatteryConsumed() const;
+    int getRechargeCount() const;
 };
 
 #endif
