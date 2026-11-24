@@ -1,4 +1,5 @@
 #include "WarehouseGridWidget.h"
+#include "MapRenderer.h"
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
@@ -111,55 +112,14 @@ void WarehouseGridWidget::paintEvent(QPaintEvent * /*event*/)
         return;
     }
 
-    int w = mapRef->getWidth();
-    int h = mapRef->getHeight();
+    MapRenderer::drawGrid(painter, *mapRef, cellSize);
 
-    for (int y = 0; y < h; ++y)
+    // Отрисовка проблемных ячеек без лишнего обхода всей сетки
+    painter.setPen(QPen(Qt::red, 3));
+    for (const auto &[px, py] : highlightedProblems)
     {
-        for (int x = 0; x < w; ++x)
-        {
-            QRect rect(x * cellSize, y * cellSize, cellSize, cellSize);
-            const std::string &type = mapRef->cells[y][x].objectType;
-
-            QColor fillColor = Qt::white;
-            QString badge = "";
-
-            if (type == "wall")
-            {
-                fillColor = QColor(60, 65, 75);
-            }
-            else if (type == "rack")
-            {
-                fillColor = QColor(180, 130, 70);
-                badge = "R";
-            }
-            else if (type == "charging")
-            {
-                fillColor = QColor(80, 190, 110);
-                badge = "⚡";
-            }
-            else if (type == "zone")
-            {
-                fillColor = QColor(90, 155, 225);
-                badge = "Z";
-            }
-
-            painter.fillRect(rect, fillColor);
-            painter.setPen(QPen(QColor(200, 205, 210), 1));
-            painter.drawRect(rect);
-
-            if (!badge.isEmpty())
-            {
-                painter.setPen(Qt::white);
-                painter.drawText(rect, Qt::AlignCenter, badge);
-            }
-
-            if (highlightedProblems.count({x, y}) > 0)
-            {
-                painter.setPen(QPen(Qt::red, 3));
-                painter.drawRect(rect.adjusted(1, 1, -1, -1));
-            }
-        }
+        QRect rect(px * cellSize, py * cellSize, cellSize, cellSize);
+        painter.drawRect(rect.adjusted(1, 1, -1, -1));
     }
 }
 

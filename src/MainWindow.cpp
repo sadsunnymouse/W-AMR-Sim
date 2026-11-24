@@ -106,34 +106,46 @@ void MainWindow::rebuildTabsForCurrentUser()
         simulationWidget->setCurrentOperator(currentUser.getUserId(), currentUser.fullName);
     }
 
-    QString roleTitle = "Неизвестная роль";
+    constexpr int kPermAdmin = 1;
+    constexpr int kPermMapEditor = 2;
+    constexpr int kPermSimulation = 4;
+
+    const CRole *activeRole = nullptr;
     for (const auto &r : roles)
     {
         if (r.getRoleId() == currentUser.roleId)
         {
-            roleTitle = QString::fromStdString(r.title);
+            activeRole = &r;
             break;
         }
     }
 
+    QString roleTitle = activeRole ? QString::fromStdString(activeRole->title) : "Неизвестная роль";
     currentUserLabel->setText(
         QString("Пользователь: %1 (%2) | Роль: %3")
             .arg(QString::fromStdString(currentUser.fullName))
             .arg(QString::fromStdString(currentUser.getLogin()))
             .arg(roleTitle));
 
-    if (currentUser.roleId == 1)
+    if (activeRole == nullptr)
+    {
+        return;
+    }
+
+    if (activeRole->hasPermission(kPermAdmin))
     {
         adminWidget->setData(roles, users);
         adminWidget->show();
         roleTabs->addTab(adminWidget, "Администрирование пользователей (А1)");
     }
-    else if (currentUser.roleId == 2)
+    if (activeRole->hasPermission(kPermMapEditor))
     {
+        mapEditorWidget->setCurrentAuthorId(currentUser.getUserId());
+        mapEditorWidget->setCatalogMaps(storedMaps);
         mapEditorWidget->show();
         roleTabs->addTab(mapEditorWidget, "Редактор топологии и экспорт/импорт (М1 / М2)");
     }
-    else if (currentUser.roleId == 3)
+    if (activeRole->hasPermission(kPermSimulation))
     {
         syncApprovedMapsToOperator();
         operatorWidget->show();
@@ -345,6 +357,10 @@ void MainWindow::onMapApproved(const CWarehouseMap &map)
     }
 
     syncApprovedMapsToOperator();
+    if (mapEditorWidget != nullptr)
+    {
+        mapEditorWidget->setCatalogMaps(storedMaps);
+    }
 }
 
 void MainWindow::onReportGenerated(const CSimulationReport &report)

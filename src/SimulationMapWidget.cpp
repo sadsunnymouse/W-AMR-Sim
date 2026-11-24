@@ -1,4 +1,5 @@
 #include "SimulationMapWidget.h"
+#include "MapRenderer.h"
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPen>
@@ -117,49 +118,7 @@ void SimulationMapWidget::paintEvent(QPaintEvent * /*event*/)
 
     int w = mapRef->getWidth();
     int h = mapRef->getHeight();
-
-    for (int y = 0; y < h; ++y)
-    {
-        for (int x = 0; x < w; ++x)
-        {
-            QRect cellRect(x * cellSize, y * cellSize, cellSize, cellSize);
-            const std::string &type = mapRef->cells[y][x].objectType;
-
-            QColor fillColor = Qt::white;
-            QString badge = "";
-
-            if (type == "wall")
-            {
-                fillColor = QColor(60, 65, 75);
-            }
-            else if (type == "rack")
-            {
-                fillColor = QColor(180, 130, 70);
-                badge = "R";
-            }
-            else if (type == "charging")
-            {
-                fillColor = QColor(80, 190, 110);
-                badge = "⚡";
-            }
-            else if (type == "zone")
-            {
-                fillColor = QColor(90, 155, 225);
-                badge = "Z";
-            }
-
-            painter.fillRect(cellRect, fillColor);
-            painter.setPen(QPen(QColor(200, 205, 210), 1));
-            painter.drawRect(cellRect);
-
-            if (!badge.isEmpty())
-            {
-                painter.setPen(Qt::white);
-                painter.drawText(cellRect, Qt::AlignCenter, badge);
-            }
-        }
-    }
-
+    MapRenderer::drawGrid(painter, *mapRef, cellSize);
     // Отрисовка целевых точек очереди с сохранением порядкового номера задания
     for (size_t i = 0; i < tasks.size(); ++i)
     {

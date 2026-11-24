@@ -32,6 +32,10 @@ private:
     QShortcut *redoShortcut;
     QPushButton *exportButton;
     QPushButton *importButton;
+    int currentAuthorId = 2;
+    std::vector<CWarehouseMap> catalogMaps;
+    QComboBox *catalogCombo = nullptr;
+    QPushButton *loadCatalogBtn = nullptr;
 
     void refreshStatusUI();
 
@@ -47,10 +51,13 @@ private slots:
     void onRedo();
     void onExportClicked();
     void onImportClicked();
+    void onLoadFromCatalogClicked();
 
 public:
     explicit MapEditorWidget(QWidget *parent = nullptr);
     const CWarehouseMap &getCurrentMap() const;
+    void setCurrentAuthorId(int authorId);
+    void setCatalogMaps(const std::vector<CWarehouseMap> &maps);
 
 signals:
     void mapApproved(const CWarehouseMap &map);

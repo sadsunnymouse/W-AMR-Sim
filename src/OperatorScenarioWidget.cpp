@@ -99,8 +99,7 @@ OperatorScenarioWidget::OperatorScenarioWidget(QWidget *parent)
 
     // Применение параметров
     applyParamsBtn = new QPushButton("Применить параметры", this);
-    readyToRunBtn = new QPushButton("К запуску симуляции (доступно после применения)", this);
-    readyToRunBtn->setEnabled(false);
+
     scenarioStatusLabel = new QLabel("Статус профиля: не применён", this);
     scenarioStatusLabel->setWordWrap(true);
 
@@ -108,7 +107,7 @@ OperatorScenarioWidget::OperatorScenarioWidget(QWidget *parent)
     rightLayout->addWidget(batGroup);
     rightLayout->addWidget(taskGroup);
     rightLayout->addWidget(applyParamsBtn);
-    rightLayout->addWidget(readyToRunBtn);
+
     rightLayout->addWidget(scenarioStatusLabel);
 
     mainLayout->addLayout(leftLayout, 2);
@@ -271,7 +270,6 @@ void OperatorScenarioWidget::onMapSelected(int index)
     startPosLabel->setText("Старт не задан");
     currentTasks.clear();
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     scenarioStatusLabel->setText("Статус профиля: не применён (загружена схема в режиме «только для чтения»)");
     refreshTaskListUI();
     refreshApplyButtonState();
@@ -293,7 +291,7 @@ void OperatorScenarioWidget::onPickStartToggled(bool checked)
         mapWidget->setPickMode(MapPickMode::PickStart);
         scenarioStatusLabel->setText("Режим выбора старта активен: кликайте по проходимым ячейкам для установки старта.");
     }
-    else if (mapWidget->getHasStart() || true)
+    else
     {
         if (!pickTargetBtn->isChecked() && !moveTargetBtn->isChecked())
         {
@@ -364,7 +362,6 @@ void OperatorScenarioWidget::onClearTasksClicked()
     mapWidget->setTasks(currentTasks);
     refreshTaskListUI();
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     refreshApplyButtonState();
 }
 
@@ -375,7 +372,6 @@ void OperatorScenarioWidget::onStartCellPicked(int x, int y)
     startPosLabel->setText(QString("Старт: (%1, %2)").arg(x).arg(y));
     scenarioStatusLabel->setText(QString("Старт установлен в (%1, %2). Режим выбора старта остаётся активным.").arg(x).arg(y));
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     refreshApplyButtonState();
 }
 
@@ -393,7 +389,6 @@ void OperatorScenarioWidget::onTargetCellPicked(int x, int y)
     mapWidget->setTasks(currentTasks);
     refreshTaskListUI();
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     refreshApplyButtonState();
 }
 
@@ -438,7 +433,6 @@ void OperatorScenarioWidget::onTargetMoved(int taskIndex, int newX, int newY)
             .arg(newCellId));
 
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     refreshApplyButtonState();
 }
 
@@ -507,7 +501,6 @@ bool OperatorScenarioWidget::validateBatteryInputs(bool /*showWarnings*/)
 void OperatorScenarioWidget::onBatteryParamChanged()
 {
     verifiedProfile.isVerified = false;
-    readyToRunBtn->setEnabled(false);
     refreshApplyButtonState();
 }
 
@@ -574,7 +567,6 @@ void OperatorScenarioWidget::onApplyParametersClicked()
     verifiedProfile.energyPerStep = energyPerStepSpin->value();
     verifiedProfile.tasks = currentTasks;
 
-    readyToRunBtn->setEnabled(true);
     scenarioStatusLabel->setText(
         QString("Профиль верифицирован: старт (%1, %2), задач в очереди: %3.")
             .arg(verifiedProfile.startX)

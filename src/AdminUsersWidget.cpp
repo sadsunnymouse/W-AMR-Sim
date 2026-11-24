@@ -180,14 +180,13 @@ void AdminUsersWidget::onAddUserClicked()
 
     for (const auto &u : users)
     {
-        if (QString::fromStdString(u.getLogin()).compare(login, Qt::CaseInsensitive) == 0)
+        if (QString::fromStdString(u.getLogin()) == login)
         {
             QMessageBox::warning(this, "Дубликат логина",
                                  "Пользователь с таким логином уже существует.");
             return;
         }
     }
-
     int roleId = roleCombo->currentData().toInt();
     CUser newUser(nextUserId++, name.toStdString(), login.toStdString(),
                   pass.toStdString(), blockedCheck->isChecked(), roleId);

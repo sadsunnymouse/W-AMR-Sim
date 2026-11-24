@@ -53,7 +53,7 @@ set(PROJECT_HEADERS
     include/SecurityUtils.h
     include/CSimulationReport.h
     include/IPathFinder.h
-    
+    include/MapRenderer.h
 )
 
 

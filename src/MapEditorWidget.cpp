@@ -24,6 +24,13 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
     heightSpin = new QSpinBox(this);
     heightSpin->setRange(4, 50);
     heightSpin->setValue(8);
+    auto *catalogBar = new QHBoxLayout();
+    catalogCombo = new QComboBox(this);
+    loadCatalogBtn = new QPushButton("Открыть из каталога", this);
+    loadCatalogBtn->setEnabled(false);
+    catalogBar->addWidget(new QLabel("Каталог схем:", this));
+    catalogBar->addWidget(catalogCombo, 1);
+    catalogBar->addWidget(loadCatalogBtn);
 
     auto *createBtn = new QPushButton("Создать сетку", this);
     topBar->addWidget(new QLabel("Название:", this));
@@ -71,6 +78,7 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
     scrollArea->setAlignment(Qt::AlignCenter);
 
     statusLabel = new QLabel(this);
+    mainLayout->addLayout(catalogBar);
 
     mainLayout->addLayout(topBar);
     mainLayout->addLayout(toolBar);
@@ -79,7 +87,7 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
 
     undoShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Z), this);
     redoShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Y), this);
-
+    connect(loadCatalogBtn, &QPushButton::clicked, this, &MapEditorWidget::onLoadFromCatalogClicked);
     connect(createBtn, &QPushButton::clicked, this, &MapEditorWidget::onCreateNewGrid);
     connect(toolCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MapEditorWidget::onToolChanged);
@@ -136,7 +144,7 @@ void MapEditorWidget::onCreateNewGrid()
     {
         name = "Склад без названия";
     }
-    currentMap.create(1, name, 1, widthSpin->value(), heightSpin->value(), "Черновик", 2);
+    currentMap.create(1, name, 1, widthSpin->value(), heightSpin->value(), "Черновик", currentAuthorId);
     gridWidget->setMap(&currentMap);
     refreshStatusUI();
 }
@@ -166,9 +174,12 @@ void MapEditorWidget::onApproveClicked()
     {
         gridWidget->setProblemCells(problems);
         refreshStatusUI();
-        QMessageBox::warning(this, "Нарушение связности",
-                             QString("Обнаружены изолированные зоны или заблокированные объекты (%1 ячеек выделено красным). Схема оставлена в статусе «Черновик».")
-                                 .arg(problems.size()));
+        QString reason = problems.empty()
+                             ? "На схеме отсутствует зарядная станция (требуется хотя бы одна доступная станция)."
+                             : QString("Обнаружены изолированные зоны или заблокированные объекты (%1 ячеек выделено красным).")
+                                   .arg(problems.size());
+        QMessageBox::warning(this, "Нарушение требований топологии",
+                             reason + " Схема оставлена в статусе «Черновик».");
     }
 }
 
@@ -250,4 +261,46 @@ void MapEditorWidget::onRedo()
 const CWarehouseMap &MapEditorWidget::getCurrentMap() const
 {
     return currentMap;
+}
+
+void MapEditorWidget::setCurrentAuthorId(int authorId)
+{
+    currentAuthorId = (authorId > 0) ? authorId : 2;
+}
+
+void MapEditorWidget::setCatalogMaps(const std::vector<CWarehouseMap> &maps)
+{
+    catalogMaps = maps;
+    catalogCombo->clear();
+    for (const auto &m : catalogMaps)
+    {
+        QString label = QString("%1 (v%2) [%3] — %4x%5")
+                            .arg(QString::fromStdString(m.title))
+                            .arg(m.getVersion())
+                            .arg(QString::fromStdString(m.getStatus()))
+                            .arg(m.getWidth())
+                            .arg(m.getHeight());
+        catalogCombo->addItem(label);
+    }
+    loadCatalogBtn->setEnabled(!catalogMaps.empty());
+}
+
+void MapEditorWidget::onLoadFromCatalogClicked()
+{
+    int idx = catalogCombo->currentIndex();
+    if (idx < 0 || idx >= static_cast<int>(catalogMaps.size()))
+    {
+        return;
+    }
+
+    const CWarehouseMap &selected = catalogMaps[idx];
+    currentMap = (selected.getStatus() == "Утверждена")
+                     ? selected.createDraftCopy()
+                     : selected;
+
+    titleEdit->setText(QString::fromStdString(currentMap.title));
+    widthSpin->setValue(currentMap.getWidth());
+    heightSpin->setValue(currentMap.getHeight());
+    gridWidget->setMap(&currentMap);
+    refreshStatusUI();
 }

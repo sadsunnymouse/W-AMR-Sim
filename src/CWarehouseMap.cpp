@@ -75,11 +75,16 @@ bool CWarehouseMap::validateConnectivity(std::vector<std::pair<int, int>> &probl
     int startX = -1;
     int startY = -1;
     int totalWalkable = 0;
+    int chargingStations = 0;
 
     for (int y = 0; y < height; ++y)
     {
         for (int x = 0; x < width; ++x)
         {
+            if (cells[y][x].objectType == "charging")
+            {
+                ++chargingStations;
+            }
             if (cells[y][x].checkWalkable())
             {
                 ++totalWalkable;
@@ -92,7 +97,7 @@ bool CWarehouseMap::validateConnectivity(std::vector<std::pair<int, int>> &probl
         }
     }
 
-    if (totalWalkable == 0 || startX == -1)
+    if (totalWalkable == 0 || startX == -1 || chargingStations == 0)
     {
         return false;
     }

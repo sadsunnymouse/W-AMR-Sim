@@ -53,7 +53,6 @@ private:
     QPushButton *moveTargetBtn;
     QPushButton *clearTasksBtn;
     QPushButton *applyParamsBtn;
-    QPushButton *readyToRunBtn;
     QLabel *scenarioStatusLabel;
 
     std::vector<CTask> currentTasks;
