@@ -83,17 +83,35 @@ std::string CSimulationReport::generateTextReport() const
 
 std::string CSimulationReport::generateCsvReport() const
 {
+    auto escapeCsv = [](const std::string &value) -> std::string
+    {
+        std::string escaped = "\"";
+        for (char ch : value)
+        {
+            if (ch == '"')
+            {
+                escaped += "\"\"";
+            }
+            else
+            {
+                escaped += ch;
+            }
+        }
+        escaped += "\"";
+        return escaped;
+    };
+
     std::ostringstream out;
     out << std::fixed << std::setprecision(2);
     out << "created_at;operator_id;operator_name;map_id;map_title;status;"
            "total_time_sec;total_ticks;completed_tasks;total_tasks;"
            "total_distance;battery_consumed;recharge_count;idle_ticks\n";
-    out << createdAt << ";"
+    out << escapeCsv(createdAt) << ";"
         << operatorId << ";"
-        << operatorName << ";"
+        << escapeCsv(operatorName) << ";"
         << mapId << ";"
-        << mapTitle << ";"
-        << sessionStatus << ";"
+        << escapeCsv(mapTitle) << ";"
+        << escapeCsv(sessionStatus) << ";"
         << totalTimeSec << ";"
         << totalTicks << ";"
         << completedTasks << ";"

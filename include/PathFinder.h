@@ -1,40 +1,28 @@
-#ifndef PATHFINDER_H
-#define PATHFINDER_H
+#pragma once
 
-#include "CWarehouseMap.h"
-#include <utility>
-#include <vector>
+#include "IPathFinder.h"
 
-struct GridPoint
-{
-    int x = 0;
-    int y = 0;
-};
-
-struct PathResult
-{
-    bool found = false;
-    std::vector<GridPoint> path; // Включает стартовую и конечную точки при found == true
-    int stepCount() const
-    {
-        return path.size() > 1 ? static_cast<int>(path.size()) - 1 : 0;
-    }
-};
-
-class PathFinder
+class PathFinder : public IPathFinder
 {
 public:
-    // Кратчайший путь между двумя ячейками на карте
-    static PathResult findShortestPath(const CWarehouseMap &map,
-                                       int startX,
-                                       int startY,
-                                       int goalX,
-                                       int goalY);
+    PathResult findShortestPath(const CWarehouseMap &map,
+                                int startX,
+                                int startY,
+                                int goalX,
+                                int goalY) const override;
 
-    // Кратчайший путь от текущей позиции до ближайшей проходимой зарядной станции ("charging")
-    static PathResult findPathToNearestCharging(const CWarehouseMap &map,
-                                                int startX,
-                                                int startY);
+    PathResult findPathToNearestCharging(const CWarehouseMap &map,
+                                         int startX,
+                                         int startY) const override;
+
+    EnergyPathResult findEnergyAwarePath(const CWarehouseMap &map,
+                                         int startX,
+                                         int startY,
+                                         int goalX,
+                                         int goalY,
+                                         double startCharge,
+                                         double capacity,
+                                         double thresholdPercent,
+                                         double stepEnergy,
+                                         bool requireExitToCharger) const override;
 };
-
-#endif

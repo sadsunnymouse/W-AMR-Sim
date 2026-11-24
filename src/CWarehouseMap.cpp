@@ -330,7 +330,9 @@ bool CWarehouseMap::importFromFile(const std::string &filePath)
         }
     }
 
-    if (parsedWidth <= 0 || parsedHeight <= 0)
+    constexpr int kMaxGridSize = 200;
+    if (parsedWidth <= 0 || parsedHeight <= 0 ||
+        parsedWidth > kMaxGridSize || parsedHeight > kMaxGridSize)
     {
         return false;
     }

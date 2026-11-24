@@ -368,6 +368,7 @@ int CDatabaseManager::saveMap(const CWarehouseMap &map)
 
     if (!executeSql("COMMIT;"))
     {
+        executeSql("ROLLBACK;");
         return -1;
     }
     return savedMapId;

@@ -52,6 +52,8 @@ set(PROJECT_HEADERS
     include/MainWindow.h
     include/SecurityUtils.h
     include/CSimulationReport.h
+    include/IPathFinder.h
+    
 )
 
 

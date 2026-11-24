@@ -297,11 +297,14 @@ void MainWindow::initDatabaseAndData()
     if (loadedMaps.empty())
     {
         CWarehouseMap demoApproved;
-        demoApproved.create(10, "Склад №1 (Утверждённый)", 1, 10, 8, "Утверждена", 2);
+        demoApproved.create(10, "Склад №1 (Утверждённый)", 1, 10, 8, "Черновик", 2);
         demoApproved.placeObject(3, 2, "wall");
         demoApproved.placeObject(3, 3, "rack");
         demoApproved.placeObject(1, 1, "charging");
         demoApproved.placeObject(8, 6, "zone");
+
+        std::vector<std::pair<int, int>> problems;
+        demoApproved.approveMap(problems);
 
         int savedId = dbManager.saveMap(demoApproved);
         if (savedId > 0)

@@ -190,6 +190,7 @@ SimulationControlWidget::SimulationControlWidget(QWidget *parent)
     tasksLayout->addWidget(tasksStatusList);
 
     sideLayout->addWidget(ctrlGroup);
+    sideLayout->addWidget(reportBtn);
     sideLayout->addWidget(telemGroup);
     sideLayout->addWidget(tasksGroup);
 
@@ -224,6 +225,14 @@ bool SimulationControlWidget::loadScenario(const ScenarioProfile &profile, const
     hasSession = ok;
     canvasWidget->setSession(hasSession ? &session : nullptr);
     refreshTelemetryUI();
+
+    if (!ok)
+    {
+        QMessageBox::warning(
+            this,
+            "Маршрут отклонён",
+            QString::fromStdString(session.getLastEventMessage()));
+    }
     return ok;
 }
 
@@ -290,6 +299,10 @@ void SimulationControlWidget::refreshTelemetryUI()
     pauseBtn->setEnabled(running);
     stepBtn->setEnabled(active && !running && !terminal);
     resetBtn->setEnabled(active);
+    if (reportBtn != nullptr)
+    {
+        reportBtn->setEnabled(active);
+    }
 
     if (!hasSession)
     {
@@ -352,7 +365,7 @@ void SimulationControlWidget::onGenerateReportClicked()
 
     const int intervalMs = (stepTimer != nullptr && stepTimer->interval() > 0)
                                ? stepTimer->interval()
-                               : 500;
+                               : 250;
     const double totalTimeSec =
         static_cast<double>(session.getCurrentStep()) * (static_cast<double>(intervalMs) / 1000.0);
     const std::string createdAt =
@@ -361,38 +374,29 @@ void SimulationControlWidget::onGenerateReportClicked()
     CSimulationReport report =
         session.buildReport(currentOperatorId, currentOperatorName, createdAt, totalTimeSec);
 
-    QString preview = QString::fromStdString(report.generateTextReport());
-    auto reply = QMessageBox::question(
+    QString defaultName = QString("wamr_report_%1.txt")
+                              .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+    QString filePath = QFileDialog::getSaveFileName(
         this,
-        "Аналитический отчёт симуляции (О4)",
-        preview + "\nСохранить отчёт во внешний файл?",
-        QMessageBox::Yes | QMessageBox::No);
+        "Сохранить аналитический отчёт",
+        defaultName,
+        "Текстовый отчёт (*.txt);;Таблица CSV (*.csv)");
 
-    if (reply == QMessageBox::Yes)
+    if (filePath.isEmpty())
     {
-        QString defaultName = QString("wamr_report_%1.txt")
-                                  .arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
-        QString filePath = QFileDialog::getSaveFileName(
-            this,
-            "Сохранить аналитический отчёт",
-            defaultName,
-            "Текстовый отчёт (*.txt);;Таблица CSV (*.csv)");
-
-        if (!filePath.isEmpty())
-        {
-            std::string errorMsg;
-            if (report.saveToFile(filePath.toStdString(), errorMsg))
-            {
-                QMessageBox::information(this, "Отчёт сохранён",
-                                         "Аналитический отчёт успешно сохранён в файл:\n" + filePath);
-            }
-            else
-            {
-                QMessageBox::warning(this, "Ошибка сохранения",
-                                     QString::fromStdString(errorMsg));
-            }
-        }
+        return;
     }
 
-    emit reportGenerated(report);
+    std::string errorMsg;
+    if (report.saveToFile(filePath.toStdString(), errorMsg))
+    {
+        QMessageBox::information(this, "Отчёт сохранён",
+                                 "Аналитический отчёт успешно сохранён в файл:\n" + filePath);
+        emit reportGenerated(report);
+    }
+    else
+    {
+        QMessageBox::warning(this, "Ошибка сохранения",
+                             QString::fromStdString(errorMsg));
+    }
 }

@@ -61,12 +61,6 @@ MapEditorWidget::MapEditorWidget(QWidget *parent) : QWidget(parent)
     toolBar->addWidget(approveButton);
     toolBar->addWidget(newDraftButton);
 
-    toolBar->addWidget(new QLabel("Объект:", this));
-    toolBar->addWidget(toolCombo);
-    toolBar->addStretch();
-    toolBar->addWidget(approveButton);
-    toolBar->addWidget(newDraftButton);
-
     // Область прокрутки с 2D-картой
     gridWidget = new WarehouseGridWidget(this);
     gridWidget->setMap(&currentMap);
