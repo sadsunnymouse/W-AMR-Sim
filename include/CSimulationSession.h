@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CSIMULATIONSESSION_H
+#define CSIMULATIONSESSION_H
 
 #include "CRobot.h"
 #include "CSimulationReport.h"
@@ -109,3 +110,4 @@ private:
     std::vector<GridPoint> activePath;
     std::string lastEventMessage;
 };
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PATHFINDER_H
+#define PATHFINDER_H
 
 #include "IPathFinder.h"
 
@@ -26,3 +27,5 @@ public:
                                          double stepEnergy,
                                          bool requireExitToCharger) const override;
 };
+
+#endif

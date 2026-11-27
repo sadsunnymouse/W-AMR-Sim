@@ -1,4 +1,5 @@
-#pragma once
+#ifndef IPATHFINDER_H
+#define IPATHFINDER_H
 
 #include "CWarehouseMap.h"
 #include <string>
@@ -57,3 +58,5 @@ public:
                                                  double stepEnergy,
                                                  bool requireExitToCharger) const = 0;
 };
+
+#endif
